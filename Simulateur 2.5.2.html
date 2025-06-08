@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Premium - JS Courtage et Financement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Montserrat:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #005a9e;
+            --secondary-color: #007bff;
+            --success-color: #28a745;
+            --light-bg: #f4f7f9;
+            --dark-text: #343a40;
+            --border-color: #dee2e6;
+            --card-bg: #ffffff;
+        }
+        
+        body { font-family: 'Roboto', sans-serif; background-color: var(--light-bg); color: var(--dark-text); margin: 0; padding: 20px; -webkit-font-smoothing: antialiased; }
+        .container { max-width: 850px; margin: auto; }
+
+        /* --- Styles du Simulateur (Formulaire) --- */
+        #simulator-container { background-color: var(--card-bg); padding: 40px; border-radius: 16px; box-shadow: 0 10px 50px rgba(0,0,0,0.1); }
+        header { text-align: center; margin-bottom: 40px; }
+        header h1 { color: var(--primary-color); margin: 0; font-family: 'Lato', sans-serif; font-size: 2.4em; font-weight: 900; }
+        header p { color: #6c757d; font-size: 1.1em; margin-top: 5px; }
+        .form-section { margin-bottom: 30px; padding-top: 25px; border-top: 1px solid var(--border-color); }
+        .form-section:first-of-type { border-top: none; padding-top: 0; }
+        .form-section h2 { 
+            margin-top: 0; 
+            margin-bottom: 25px;
+            color: var(--primary-color); 
+            font-size: 1.6em; 
+            font-family: 'Lato', sans-serif; 
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .form-section h2::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 4px;
+            width: 50px;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            border-radius: 2px;
+            transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .form-section:hover h2::after {
+            width: 90px;
+        }
+        .form-group { display: grid; grid-template-columns: 1fr 2fr; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .form-group label { font-weight: 500; text-align: right; color: #495057; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 1em; font-family: inherit; transition: all 0.3s ease-in-out; }
+        .form-group input:hover, .form-group select:hover, .form-group textarea:hover { border-color: var(--secondary-color); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); }
+        .switch-container { display: flex; align-items: center; gap: 15px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
+        .dynamic-fields { transition: opacity 0.4s, transform 0.4s; transform-origin: top; }
+        .hidden { display: none; }
+        .submit-btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 18px; background: linear-gradient(45deg, var(--success-color), #218838); color: white; border: none; border-radius: 8px; font-size: 1.3em; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; margin-top: 20px; }
+        .submit-btn::before { content: '🚀'; margin-right: 10px; font-size: 1.2em; }
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(40,167,69,.4); }
+        .form-footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.9em; color: #6c757d; }
+        .version-info { font-size: 0.8em; color: #aaa; margin-top: 15px; }
+
+        /* --- Styles du Rapport --- */
+        #report-wrapper { display: none; }
+        .page { width: 210mm; min-height: 297mm; margin: 40px auto; background-color: white; box-shadow: 0 0 25px rgba(0,0,0,0.1); padding: 20mm; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+        .report-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 4px solid var(--primary-color); padding-bottom: 20px; }
+        .report-header .logo-title { flex-shrink: 0; }
+        .report-header .logo-title h1 { font-family: 'Lato', sans-serif; margin: 0; color: var(--primary-color); font-size: 2.2em; font-weight: 900; }
+        .report-header .logo-title p { margin: 5px 0 0; font-size: 1.1em; color: #7f8c8d; }
+        .report-header .client-info { text-align: right; font-size: 0.9em; line-height: 1.5; padding-left: 20px; }
+        .report-section { margin: 35px 0; }
+        .section-title { font-family: 'Lato', sans-serif; font-size: 1.6em; color: #2c3e50; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px; margin-bottom: 20px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+        .card { background-color: #f8f9fa; padding: 15px 10px; border-radius: 12px; border: 1px solid #ecf0f1; text-align: center; }
+        .card .label { font-size: 0.9em; color: #7f8c8d; margin-bottom: 8px; font-weight: 600; }
+        .card .value { font-size: 1.25em; font-weight: 700; color: var(--primary-color); white-space: nowrap; }
+        .card .icon { font-size: 1.5em; margin-bottom: 10px; color: var(--secondary-color); }
+        .feasibility-banner { padding: 20px; border-radius: 8px; text-align: center; font-size: 1.3em; font-weight: 700; margin-bottom: 30px; }
+        .feasibility-banner.success { background-color: #e9f7ec; color: #155724; border: 1px solid #c3e6cb; }
+        .feasibility-banner.failure { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .financing-plan { display: flex; gap: 25px; margin-top: 20px; }
+        .loan-card { flex: 1; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .loan-card.ptz { background: linear-gradient(135deg, #e6f7ff, #b3e0ff); }
+        .loan-card.main-loan { background: linear-gradient(135deg, #e9ecef, #d6d8db); }
+        .loan-card h3 { margin-top: 0; font-size: 1.2em; color: #2c3e50; }
+        .loan-card .amount { font-family: 'Lato', sans-serif; font-size: 2.4em; font-weight: 900; color: var(--primary-color); margin: 10px 0; }
+        .loan-card .details { font-size: 1em; font-weight: 600; color: #34495e; line-height: 1.6; }
+        .summary-table { width: 100%; margin-top: 30px; border-collapse: collapse; }
+        .summary-table td { padding: 15px; font-size: 1.1em; border-bottom: 1px solid #ecf0f1; }
+        .summary-table tr:last-child td { border-bottom: none; }
+        .summary-table .label-col { color: #7f8c8d; }
+        .summary-table .amount-col { text-align: right; font-weight: 700; }
+        .summary-table .total-row td { font-weight: bold; font-size: 1.2em; color: #2c3e50; border-top: 2px solid #34495e; }
+        .notes-box { background-color: #fffbe6; border: 1px solid #ffe58f; padding: 15px 20px; border-radius: 8px; }
+        .notes-box p { margin: 0; font-style: italic; color: #5c5c5c; line-height: 1.6; }
+        .report-footer { text-align: center; margin-top: 50px; border-top: 1px solid #ecf0f1; padding-top: 25px; }
+        .report-footer h3 { margin: 0 0 10px 0; color: #2c3e50; }
+        .report-footer p { margin: 5px 0; font-weight: 600; font-size: 1em; }
+        .report-footer a { color: var(--primary-color); text-decoration: none; }
+        .report-footer a:hover { text-decoration: underline; }
+        .disclaimer { font-size: 0.8em; font-style: italic; color: #7f8c8d; margin-top: 20px; }
+        .report-controls { text-align: center; margin-top: 20px; padding-bottom: 20px; }
+        .back-btn { padding: 12px 25px; border: none; border-radius: 50px; font-size: 1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: all 0.2s; background-color: var(--secondary-color); color: white; }
+        .back-btn:hover { background-color: #0069d9; }
+        
+        @media print { body { background-color: white; } #simulator-container, .report-controls { display: none; } #report-wrapper { display: block; } .page { margin: 0; box-shadow: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- ===== SECTION SIMULATEUR ===== -->
+        <div id="simulator-container">
+            <header>
+                <h1>Simulateur de financement expert</h1>
+                <p>Analyse de capacité d'emprunt et plan de financement</p>
+            </header>
+
+            <form id="loan-simulator-form">
+                <div class="form-section">
+                    <h2>Informations client et projet</h2>
+                    <div class="form-group">
+                        <label for="nomClient">Nom du client</label>
+                        <input type="text" id="nomClient" required placeholder="Ex: M. et Mme Dupont">
+                    </div>
+                    <div class="form-group">
+                        <label for="adresseProjet">Adresse du projet</label>
+                        <input type="text" id="adresseProjet" placeholder="Facultatif">
+                    </div>
+                    <div class="form-group">
+                        <label for="isNeuf">Projet neuf ?</label>
+                        <div class="switch-container">
+                            <label class="switch">
+                                <input type="checkbox" id="isNeuf" onchange="toggleProjectFields()">
+                                <span class="slider"></span>
+                            </label>
+                            <span>Cocher si construction d'une maison individuelle neuve</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cost-fields-container" class="form-section">
+                    <div id="ancien-cost-fields" class="dynamic-fields">
+                         <div class="form-group"><label for="prixBien">Prix du bien immobilier (€)</label><input type="number" id="prixBien" required></div>
+                         <div class="form-group"><label for="montantTravaux">Montant travaux (€)</label><input type="number" id="montantTravaux" placeholder="Laisser vide si aucun"></div>
+                         <div class="form-group"><label for="fraisNotaireAncien">Frais de notaire (ancien)</label><input type="number" id="fraisNotaireAncien"></div>
+                    </div>
+                    <div id="neuf-cost-fields" class="dynamic-fields hidden">
+                        <div class="form-group"><label for="prixTerrain">Prix du terrain (€)</label><input type="number" id="prixTerrain"></div>
+                        <div class="form-group"><label for="montantConstruction">Montant de la construction (€)</label><input type="number" id="montantConstruction"></div>
+                        <div class="form-group"><label for="fraisNotaireNeuf">Frais de notaire (neuf)</label><input type="number" id="fraisNotaireNeuf"></div>
+                    </div>
+                </div>
+
+                <div id="ptz-fields" class="form-section hidden">
+                    <h2>Éligibilité au prêt à taux zéro (PTZ)</h2>
+                    <div class="form-group">
+                        <label for="zone">Zone de construction</label>
+                        <select id="zone"><option value="A">Zone A</option><option value="B1">Zone B1</option><option value="B2">Zone B2</option><option value="C">Zone C</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rfr">Revenu fiscal N-2 (€)</label><input type="number" id="rfr">
+                    </div>
+                    <div class="form-group">
+                        <label for="nbPersonnes">Personnes au foyer</label><input type="number" id="nbPersonnes" min="1">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Situation financière et prêt</h2>
+                    <div class="form-group">
+                        <label for="apportPersonnel">Apport personnel (€)</label><input type="number" id="apportPersonnel" placeholder="Laisser vide si aucun">
+                    </div>
+                    <div class="form-group">
+                        <label for="revenusMensuels">Revenus mensuels nets (€)</label><input type="number" id="revenusMensuels" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="creditEnCours">Crédits en cours (€/mois)</label><input type="number" id="creditEnCours" placeholder="Laisser vide si aucun">
+                    </div>
+                    <div class="form-group">
+                        <label for="dureeMois">Durée du prêt (mois)</label><input type="number" id="dureeMois" required placeholder="Ex: 300 (25 ans)">
+                    </div>
+                    <div class="form-group">
+                        <label for="tauxPret">Taux nominal du prêt (%)</label><input type="number" id="tauxPret" step="0.01" required placeholder="Ex: 3.85">
+                    </div>
+                    <div class="form-group">
+                        <label for="observations">Observations</label>
+                        <textarea id="observations" rows="2" placeholder="Notes sur le dossier..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">Générer le rapport client</button>
+            </form>
+            <footer class="form-footer">
+                <p><strong>JS Courtage et Financement</strong> - Julien SOUMILLON</p>
+                <p class="version-info">Toutes propriétés réservées - v2.5.2</p>
+            </footer>
+        </div>
+
+        <!-- ===== SECTION RAPPORT (initialement cachée) ===== -->
+        <div id="report-wrapper"></div>
+    </div>
+
+<script>
+    function toggleProjectFields() {
+        const isNeuf = document.getElementById('isNeuf').checked;
+        const ptzFields = document.getElementById('ptz-fields');
+        const neufCostFields = document.getElementById('neuf-cost-fields');
+        const ancienCostFields = document.getElementById('ancien-cost-fields');
+        const ptzInputs = ptzFields.querySelectorAll('input, select');
+        const neufCostInputs = neufCostFields.querySelectorAll('input');
+        const ancienCostInputs = ancienCostFields.querySelectorAll('input');
+
+        if (isNeuf) {
+            ptzFields.classList.remove('hidden');
+            neufCostFields.classList.remove('hidden');
+            ancienCostFields.classList.add('hidden');
+            ptzInputs.forEach(i => i.required = true);
+            neufCostInputs.forEach(i => i.required = true);
+            ancienCostInputs.forEach(i => { i.required = false; i.value = ''; });
+        } else {
+            ptzFields.classList.add('hidden');
+            neufCostFields.classList.add('hidden');
+            ancienCostFields.classList.remove('hidden');
+            ptzInputs.forEach(i => { i.required = false; i.value = ''; });
+            neufCostInputs.forEach(i => { i.required = false; i.value = ''; });
+            ancienCostInputs[0].required = true;
+        }
+    }
+    toggleProjectFields();
+
+    document.getElementById('loan-simulator-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const inputs = {
+            nomClient: document.getElementById('nomClient').value,
+            adresseProjet: document.getElementById('adresseProjet').value,
+            observations: document.getElementById('observations').value,
+            isNeuf: document.getElementById('isNeuf').checked,
+            prixBien: parseFloat(document.getElementById('prixBien').value) || 0,
+            montantTravaux: parseFloat(document.getElementById('montantTravaux').value) || 0,
+            fraisNotaireAncien: parseFloat(document.getElementById('fraisNotaireAncien').value) || 0,
+            prixTerrain: parseFloat(document.getElementById('prixTerrain').value) || 0,
+            montantConstruction: parseFloat(document.getElementById('montantConstruction').value) || 0,
+            fraisNotaireNeuf: parseFloat(document.getElementById('fraisNotaireNeuf').value) || 0,
+            zone: document.getElementById('zone').value,
+            rfr: parseFloat(document.getElementById('rfr').value) || 0,
+            nbPersonnes: parseInt(document.getElementById('nbPersonnes').value) || 0,
+            apportPersonnel: parseFloat(document.getElementById('apportPersonnel').value) || 0,
+            revenusMensuels: parseFloat(document.getElementById('revenusMensuels').value) || 0,
+            creditEnCours: parseFloat(document.getElementById('creditEnCours').value) || 0,
+            dureeMois: parseInt(document.getElementById('dureeMois').value) || 0,
+            tauxPret: parseFloat(document.getElementById('tauxPret').value) || 0,
+        };
+
+        const coutProjetTotal = inputs.isNeuf 
+            ? inputs.prixTerrain + inputs.montantConstruction + inputs.fraisNotaireNeuf
+            : inputs.prixBien + inputs.montantTravaux + inputs.fraisNotaireAncien;
+
+        const coutProjetPourPtz = inputs.isNeuf
+            ? inputs.prixTerrain + inputs.montantConstruction
+            : inputs.prixBien + inputs.montantTravaux;
+
+        let montantPtz = 0;
+        let ptzEligible = false;
+        if (inputs.isNeuf && inputs.rfr > 0 && inputs.nbPersonnes > 0) {
+            const ptzData = {
+                'A':{1:{r:49000,c:150000},2:{r:73500,c:225000},3:{r:88200,c:270000},4:{r:102900,c:315000},5:{r:117600,c:360000}},
+                'B1':{1:{r:34500,c:135000},2:{r:51750,c:202500},3:{r:62100,c:243000},4:{r:72450,c:283500},5:{r:82800,c:324000}},
+                'B2':{1:{r:31500,c:110000},2:{r:47250,c:165000},3:{r:56700,c:198000},4:{r:66150,c:231000},5:{r:75600,c:264000}},
+                'C':{1:{r:28500,c:100000},2:{r:42750,c:150000},3:{r:51300,c:180000},4:{r:59850,c:210000},5:{r:68400,c:240000}}
+            };
+            const quotites = { tranche1: 0.30, tranche2: 0.20, tranche3: 0.10 };
+            const persIndex = Math.min(inputs.nbPersonnes, 5);
+            const ptzRule = ptzData[inputs.zone][persIndex];
+            const revenuPourCalcul = Math.max(inputs.rfr, coutProjetPourPtz / 9);
+            if (revenuPourCalcul <= ptzRule.r) {
+                ptzEligible = true;
+                const baseCalculPtz = Math.min(coutProjetPourPtz, ptzRule.c);
+                const ratioRevenu = revenuPourCalcul / ptzRule.r;
+                let quotiteAppliquee;
+                if (ratioRevenu <= 0.75) { quotiteAppliquee = quotites.tranche1; }
+                else if (ratioRevenu <= 0.90) { quotiteAppliquee = quotites.tranche2; }
+                else { quotiteAppliquee = quotites.tranche3; }
+                montantPtz = Math.floor(baseCalculPtz * quotiteAppliquee);
+            }
+        }
+
+        const montantPretPrincipal = Math.max(0, coutProjetTotal - inputs.apportPersonnel - montantPtz);
+        
+        let mensualitePrincipale = 0;
+        if (montantPretPrincipal > 0 && inputs.dureeMois > 0 && inputs.tauxPret >= 0) {
+             const tauxMensuel = inputs.tauxPret / 100 / 12;
+             mensualitePrincipale = tauxMensuel > 0 ? (montantPretPrincipal * tauxMensuel * Math.pow(1 + tauxMensuel, inputs.dureeMois)) / (Math.pow(1 + tauxMensuel, inputs.dureeMois) - 1) : montantPretPrincipal / inputs.dureeMois;
+        }
+
+        const maxEndettement = inputs.revenusMensuels * 0.33;
+        const totalMonthlyPayments = mensualitePrincipale + inputs.creditEnCours;
+        const debtRatio = inputs.revenusMensuels > 0 ? (totalMonthlyPayments / inputs.revenusMensuels) * 100 : 0;
+        const isFeasible = totalMonthlyPayments <= maxEndettement;
+        const remainingIncome = inputs.revenusMensuels - totalMonthlyPayments;
+        
+        const reportData = { ...inputs, coutProjetTotal, montantPtz, ptzEligible, montantPretPrincipal, mensualitePrincipale, isFeasible, debtRatio, remainingIncome, dateSimulation: new Date().toLocaleDateString('fr-FR') };
+        displayReport(reportData);
+    });
+
+    function displayReport(data) {
+        const reportWrapper = document.getElementById('report-wrapper');
+        const formatCurrency = (value) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
+
+        const feasibilityHTML = data.isFeasible
+            ? `<div class="feasibility-banner success">✅ Projet réalisable dans le respect de votre taux d'endettement maximum</div>`
+            : `<div class="feasibility-banner failure">⚠️ Le projet dépasse votre capacité d'endettement maximale</div>`;
+
+        let financingPlanHTML = '';
+        if (data.isNeuf && data.ptzEligible && data.montantPtz > 0) {
+            financingPlanHTML += `<div class="loan-card ptz"><h3>Prêt à taux zéro (PTZ)</h3><p class="amount">${formatCurrency(data.montantPtz)}</p><p class="details">Taux : 0% | Remboursement différé</p></div>`;
+        }
+        financingPlanHTML += `<div class="loan-card main-loan" style="${!data.isNeuf || data.montantPtz === 0 ? 'flex-grow: 2;' : ''}"><h3>Prêt principal</h3><p class="amount">${formatCurrency(data.montantPretPrincipal)}</p><p class="details">Taux : ${data.tauxPret.toFixed(2)}% sur ${data.dureeMois} mois</p></div>`;
+
+        const observationsHTML = data.observations ? `<section class="report-section"><h2 class="section-title">Notes et observations</h2><div class="notes-box"><p>${data.observations.replace(/\n/g, '<br>')}</p></div></section>` : '';
+        
+        let costBreakdownHTML = '';
+        if(data.isNeuf) {
+            costBreakdownHTML = `
+                <div class="card"><div class="label">Prix du terrain</div><div class="value">${formatCurrency(data.prixTerrain)}</div></div>
+                <div class="card"><div class="label">Montant construction</div><div class="value">${formatCurrency(data.montantConstruction)}</div></div>
+                <div class="card"><div class="label">Frais de notaire</div><div class="value">${formatCurrency(data.fraisNotaireNeuf)}</div></div>
+                <div class="card"><div class="label">Apport personnel</div><div class="value">${formatCurrency(data.apportPersonnel)}</div></div>
+            `;
+        } else {
+             costBreakdownHTML = `
+                <div class="card"><div class="label">Prix du bien</div><div class="value">${formatCurrency(data.prixBien)}</div></div>
+                ${data.montantTravaux > 0 ? `<div class="card"><div class="label">Montant travaux</div><div class="value">${formatCurrency(data.montantTravaux)}</div></div>` : ''}
+                <div class="card"><div class="label">Frais de notaire</div><div class="value">${formatCurrency(data.fraisNotaireAncien)}</div></div>
+                <div class="card"><div class="label">Apport personnel</div><div class="value">${formatCurrency(data.apportPersonnel)}</div></div>
+            `;
+        }
+
+        let analysisGridHTML = `
+            <div class="card"><div class="icon">💰</div><div class="label">Mensualité du prêt</div><div class="value">${formatCurrency(data.mensualitePrincipale)}</div></div>
+            <div class="card"><div class="icon">📊</div><div class="label">Taux d'endettement final</div><div class="value">${data.debtRatio.toFixed(2)} %</div></div>
+            <div class="card"><div class="icon">🏡</div><div class="label">Reste à vivre</div><div class="value">${formatCurrency(data.remainingIncome)}</div></div>
+            <div class="card"><div class="icon">💶</div><div class="label">Revenus du foyer</div><div class="value">${formatCurrency(data.revenusMensuels)}</div></div>
+        `;
+        if (data.creditEnCours > 0) {
+            analysisGridHTML += `<div class="card"><div class="icon">💳</div><div class="label">Crédits existants</div><div class="value">${formatCurrency(data.creditEnCours)} / mois</div></div>`;
+        }
+        if (data.isNeuf) {
+            analysisGridHTML += `<div class="card"><div class="icon">📄</div><div class="label">Revenu fiscal (N-2)</div><div class="value">${formatCurrency(data.rfr)}</div></div>`;
+        }
+
+
+        const reportHTML = `
+            <div class="page">
+                <header class="report-header">
+                    <div class="logo-title"><h1>Simulation de financement</h1><p>Projet de ${data.isNeuf ? 'construction neuve' : 'rénovation / achat ancien'}</p></div>
+                    <div class="client-info"><strong>Client :</strong> ${data.nomClient}<br><strong>Date :</strong> ${data.dateSimulation}</div>
+                </header>
+                <section class="report-section">
+                    <h2 class="section-title">Votre projet en chiffres</h2>
+                    <div class="info-grid">${costBreakdownHTML}</div>
+                </section>
+                ${feasibilityHTML}
+                <section class="report-section">
+                    <h2 class="section-title">Analyse financière clé</h2>
+                    <div class="info-grid">${analysisGridHTML}</div>
+                </section>
+                <section class="report-section">
+                    <h2 class="section-title">Plan de financement détaillé</h2>
+                    <div class="financing-plan">${financingPlanHTML}</div>
+                    <table class="summary-table">
+                        <tr><td class="label-col">Coût total de l'opération</td><td class="amount-col">${formatCurrency(data.coutProjetTotal)}</td></tr>
+                        <tr><td class="label-col">(-) Votre apport personnel</td><td class="amount-col">-${formatCurrency(data.apportPersonnel)}</td></tr>
+                        ${data.montantPtz > 0 ? `<tr><td class="label-col">(-) Prêt à taux zéro</td><td class="amount-col">-${formatCurrency(data.montantPtz)}</td></tr>` : ''}
+                        <tr class="total-row"><td class="label-col">(=) Montant du prêt principal</td><td class="amount-col">${formatCurrency(data.montantPretPrincipal)}</td></tr>
+                    </table>
+                </section>
+                ${observationsHTML}
+                <footer class="report-footer">
+                    <h3>Votre expert dédié</h3>
+                    <p>Julien SOUMILLON - JS Courtage et Financement</p>
+                    <p>📞 06 31 59 03 81 | <a href="mailto:julien@js-courtage-et-financement.com">✉️ julien@js-courtage-et-financement.com</a></p>
+                    <p>Orias numéro 17003825</p>
+                    <p><a href="http://js-courtage-et-financement.com" target="_blank">js-courtage-et-financement.com</a></p>
+                    <p class="disclaimer">Ce document est une simulation qui ne saurait avoir de valeur contractuelle.</p>
+                </footer>
+            </div>
+            <div class="report-controls"><button class="back-btn" onclick="backToSimulator()">Retourner au simulateur</button></div>
+        `;
+        
+        document.getElementById('report-wrapper').innerHTML = reportHTML;
+        document.getElementById('simulator-container').style.display = 'none';
+        document.getElementById('report-wrapper').style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+
+    function backToSimulator() {
+        document.getElementById('report-wrapper').style.display = 'none';
+        document.getElementById('simulator-container').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
